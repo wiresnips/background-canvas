@@ -85,8 +85,8 @@ var BackgroundCanvas = (function () {
 		self.getWidth = function () { return self.canvas.width * zoom; }
 		self.getHeight = function () { return self.canvas.height * zoom; }
 
-		bindEventListener( window, "scroll", self.updateCanvasSize );
-		bindEventListener( window, "resize", self.updateCanvasSize );
+		bindEventListener( window, "scroll", function(){self.updateCanvasSize();} );
+		bindEventListener( window, "resize", function(){self.updateCanvasSize();} );
 
 		afterLoad( function () { self.setSize(); } );
 	};
