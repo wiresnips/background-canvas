@@ -1,6 +1,7 @@
 # BackgroundCanvas
 
 Quick & dirty canvas-as-background utility. Fills the page, centered, without scrollbars.
+For example usage, see [here](http://novorobo.com/programming/javascript/utilities/13-03-21_background-canvas.html).
 
 ## Constructor Params
 ### zoom
