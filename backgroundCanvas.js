@@ -16,7 +16,7 @@ var BackgroundCanvas = (function () {
 			target.attachEvent('on'+event, handler);
 	}
 
-	function afterLoad (func) {
+	function afterload (func) {
 		if (document.readyState == "complete")
 	   		func();
 	  	else
@@ -88,7 +88,7 @@ var BackgroundCanvas = (function () {
 		bindEventListener( window, "scroll", function(){self.updateCanvasSize();} );
 		bindEventListener( window, "resize", function(){self.updateCanvasSize();} );
 
-		afterLoad( function () { self.setSize(); } );
+		afterload( function () { self.setSize(); } );
 	};
 
 
@@ -145,7 +145,7 @@ var BackgroundCanvas = (function () {
 
 
 	document.write(
-		"<style>"
+		"<style>" +
 			".background-canvas-container {" +
 				"overflow: hidden;" +
 				"position: absolute;" +
