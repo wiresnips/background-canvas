@@ -144,18 +144,18 @@ var BackgroundCanvas = (function () {
 	};
 
 
-
-	var canvasContainerCSS  = "<style>"
-		canvasContainerCSS += 	".background-canvas-container {";
-		canvasContainerCSS += 		"overflow: hidden;";
-		canvasContainerCSS += 		"position: absolute;";
-		canvasContainerCSS += 		"top: 0px;";
-		canvasContainerCSS += 		"bottom: 0px;";
-		canvasContainerCSS += 		"height: 100%;";
-		canvasContainerCSS += 		"width: 100%;";
-		canvasContainerCSS += 	"}"
-		canvasContainerCSS += "</style>";
-	document.write( canvasContainerCSS );
+	document.write(
+		"<style>"
+			".background-canvas-container {" +
+				"overflow: hidden;" +
+				"position: absolute;" +
+				"top: 0px;" +
+				"bottom: 0px;" +
+				"height: 100%;" +
+				"width: 100%;" +
+			"}" +
+		"</style>"
+	);
 
 
 	// export the important bit 
