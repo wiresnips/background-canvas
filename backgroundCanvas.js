@@ -1,6 +1,5 @@
 
 
-
 // everything's wrapped so I don't pollute your namespace
 var BackgroundCanvas = (function () {
 
@@ -116,8 +115,8 @@ var BackgroundCanvas = (function () {
         if (maxDim > dimLimit)
             this.scale *= 1 - ((maxDim - dimLimit) / maxDim);
 
-        this.canvas.width = docWidth * this.scale;
-        this.canvas.height = docHeight * this.scale;
+	    this.canvas.width = Math.ceil(docWidth * this.scale);
+	    this.canvas.height = Math.ceil(docHeight * this.scale);
 
         this.canvas.style.width = docWidth + "px";
         this.canvas.style.height = docHeight + "px";
