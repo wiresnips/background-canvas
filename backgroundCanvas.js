@@ -1,173 +1,97 @@
 
+function BackgroundCanvas (targetZoom, zIndex) {
+    targetZoom = typeof targetZoom !== 'undefined' ? targetZoom : 1;
 
+    var self = this;
+    self.scale = 1 / targetZoom;
 
-// everything's wrapped so I don't pollute your namespace
-var BackgroundCanvas = (function () {
+    self.container = document.createElement("div");
+    self.container.className = "background-canvas-container";
 
+    if (typeof zIndex !== "undefined")
+        self.container.style.zIndex = zIndex;
 
-	//////////////////////////////////////////////////
-	// a handful of simple utility functions
-	//////////////////////////////////////////////////
+    self.canvas = document.createElement("canvas");
+    self.context = self.canvas.getContext("2d");
 
-	function bindEventListener (target, event, handler) {
-		if (target.addEventListener)
-			target.addEventListener(event, handler, false);
-		else if (target.attachEvent)
-			target.attachEvent('on'+event, handler);
-	}
+    self.getWidth = function () { return self.canvas.width / self.scale; }
+    self.getHeight = function () { return self.canvas.height / self.scale; }
 
-	function afterload (func) {
-		if (document.readyState == "complete")
-	   		func();
-	  	else
-	   		bindEventListener( window, "load", func );
-	}
+    bindEventListener( window, "scroll", function(){self.updateCanvasSize();} );
+    bindEventListener( window, "resize", function(){self.updateCanvasSize();} );
 
-	function getViewRect () {
-		// this is most modern browsers
-		if (typeof window.pageXOffset != 'undefined')
-			return [window.pageXOffset, window.pageYOffset, 
-					window.innerWidth, window.innerHeight];
-
-		// this is IE8 down to IE6 (anything older can suck it)
-		return [document.documentElement.scrollLeft, document.documentElement.scrollTop,
-				window.innerWidth, window.innerHeight];
-	};
-
-	function getDocHeight () {
-	    var B = document.body;
-	    var E = document.documentElement;
-	    var S = window.screen;
-
-	    return Math.max(
-			B.scrollHeight, B.offsetHeight, B.clientHeight, 
-			E.scrollHeight, E.offsetHeight, E.clientHeight,
-			S.height, S.availHeight
-	    );
-	};
-
-	function getDocWidth () {
-	    var B = document.body;
-	    var E = document.documentElement;
-	    var S = window.screen;
-
-	    return Math.max(
-			B.scrollWidth, B.offsetWidth, B.clientWidth, 
-			E.scrollWidth, E.offsetWidth, E.clientWidth,
-			S.width, S.availWidth
-	    );
-	};
+    afterload( function(){document.body.appendChild(self.container);} );
+    afterload( function(){self.setSize();} );
+};
 
 
 
+BackgroundCanvas.prototype.getVisibleRect = function () {
+    var viewRect = getViewRect(); // [left, top, width, height ]
+    viewRect[0] += (this.getWidth() - document.body.scrollWidth) * 0.5; // this should move the screenCoords into canvasCoords
+
+    // apply the scaling
+    viewRect[0] = Math.floor( viewRect[0] * this.scale );
+    viewRect[1] = Math.floor( viewRect[1] * this.scale );
+    viewRect[2] = Math.ceil( viewRect[2] * this.scale );
+    viewRect[3] = Math.ceil( viewRect[3] * this.scale );
+
+    return viewRect;
+}
+
+BackgroundCanvas.prototype.setSize = function () {
+    var docWidth = getDocWidth();
+    var docHeight = getDocHeight();
+
+    // things start to break if we try to make the canvas too large, so we'll auto-scale to keep the size down
+    var dimLimit = 8192;
+    var maxDim = this.scale * Math.max(docHeight, docWidth);    
+    if (maxDim > dimLimit)
+        this.scale *= 1 - ((maxDim - dimLimit) / maxDim);
+
+    this.canvas.width = docWidth * this.scale;
+    this.canvas.height = docHeight * this.scale;
+
+    this.canvas.style.width = docWidth + "px";
+    this.canvas.style.height = docHeight + "px";
+
+    this.canvas.style.position = "relative";
+    this.canvas.style.left = "50%";
+    this.canvas.style.marginLeft = "-" + (docWidth * 0.5) + "px";
+
+    if (this.scale != 1)
+        this.context.scale( this.scale, this.scale );
+
+    this.container.appendChild(this.canvas);
+}
 
 
-	//////////////////////////////////////////////////
-	// and now the actual BackgroundCanvas function
-	//////////////////////////////////////////////////
+BackgroundCanvas.prototype.updateCanvasSize = function () {
+    var docWidth = getDocWidth();
+    var docHeight = getDocHeight();
 
-	var BackgroundCanvas = function (zoom, zIndex) {
-		zoom = typeof zoom !== 'undefined' ? zoom : 1;
+    // if we shrank, it's all fine and dandy.
+    if (this.canvas.width >= docWidth * this.scale && this.canvas.height >= docHeight * this.scale)
+        return;
 
-		var self = this;
-		self.scale = 1 / zoom;
-
-		self.container = document.createElement("div");
-		self.container.className = "background-canvas-container";
-		document.body.insertBefore( self.container, document.body.firstChild );
-
-		if (typeof zIndex !== "undefined")
-			self.container.style.zIndex = zIndex;
-
-		self.canvas = document.createElement("canvas");
-		self.context = self.canvas.getContext("2d");
-
-		self.getWidth = function () { return self.canvas.width * zoom; }
-		self.getHeight = function () { return self.canvas.height * zoom; }
-
-		bindEventListener( window, "scroll", function(){self.updateCanvasSize();} );
-		bindEventListener( window, "resize", function(){self.updateCanvasSize();} );
-
-		afterload( function () { self.setSize(); } );
-	};
+    // otherwise, we need to resize ourselves to fit again
+    this.setSize();
+    
+    // if we're able to, we should refresh ourselves
+    if (this.canvas.refresh)
+        this.canvas.refresh();
+};
 
 
-
-	BackgroundCanvas.prototype.getVisibleRect = function () {
-		var viewRect = getViewRect(); // [ top-left x, top-left y, width, height ]
-		viewRect[0] += (this.getWidth() - document.body.scrollWidth) * 0.5; // this should move the screenCoords into canvasCoords
-
-		// apply the scaling
-		viewRect[0] = Math.floor( viewRect[0] * this.scale );
-		viewRect[1] = Math.floor( viewRect[1] * this.scale );
-		viewRect[2] = Math.ceil( viewRect[2] * this.scale );
-		viewRect[3] = Math.ceil( viewRect[3] * this.scale );
-
-		return viewRect;
-	}
-
-	BackgroundCanvas.prototype.setSize = function () {
-		var docWidth = getDocWidth();
-		var docHeight = getDocHeight();
-
-		this.canvas.width = docWidth * this.scale;
-		this.canvas.height = docHeight * this.scale;
-
-		this.canvas.style.width = docWidth + "px";
-		this.canvas.style.height = docHeight + "px";
-
-		this.canvas.style.position = "relative";
-		this.canvas.style.left = "50%";
-		this.canvas.style.marginLeft = "-" + (docWidth * 0.5) + "px";
-
-		if (this.scale != 1)
-			this.context.scale( this.scale, this.scale );
-
-		this.container.appendChild(this.canvas);
-	}
-
-
-	BackgroundCanvas.prototype.updateCanvasSize = function () {
-		var docWidth = getDocWidth();
-		var docHeight = getDocHeight();
-
-		// if we shrank, it's all fine and dandy.
-		if (this.canvas.width >= docWidth * this.scale && this.canvas.height >= docHeight * this.scale)
-			return;
-
-		// otherwise, we need to resize ourselves to fit again
-		this.setSize();
-		
-		// if we're able to, we should refresh ourselves
-		if (this.canvas.refresh)
-			this.canvas.refresh();
-	};
-
-
-	document.write(
-		"<style>" +
-			".background-canvas-container {" +
-				"overflow: hidden;" +
-				"position: absolute;" +
-				"top: 0px;" +
-				"bottom: 0px;" +
-				"height: 100%;" +
-				"width: 100%;" +
-			"}" +
-		"</style>"
-	);
-
-
-	// export the important bit 
-	return BackgroundCanvas;
-})();
-
-
-
-
-
-
-
-
-
-
+document.write(
+    "<style>" +
+        ".background-canvas-container {" +
+            "overflow: hidden;" +
+            "position: absolute;" +
+            "top: 0px;" +
+            "bottom: 0px;" +
+            "height: 100%;" +
+            "width: 100%;" +
+        "}" +
+    "</style>" 
+);
